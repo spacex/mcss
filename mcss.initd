@@ -1,4 +1,6 @@
-#~/sbin/runscript
+#!/bin/bash
+#
+# VERY basic init-like script for starting and stopping all configured servers
 
 if [-f /etc/mcss.conf ]
   /etc/mcss.conf
