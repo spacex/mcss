@@ -23,6 +23,7 @@ depend() {
 #done
 
 iterate_servers() {
+  export SCREENDIR=/root/.screen/
   for f in /etc/mcss.d/*.conf; do
     . $f
     if [ ${DISABLED} -eq 0 -a ${AUTOSTART} -eq 1 ]; then
