@@ -1,0 +1,153 @@
+#!/bin/bash
+
+if [ ! -z ${NO_FORK} ]; then
+  SERVER_PATH=$1
+  ACTION=$2
+  OVERRIDE_DEST=$3
+elif [ -f $(dirname $0)/settings.mcss ]; then
+  SERVER_PATH=$(dirname $0)
+
+  ACTION=$1
+  OVERRIDE_DEST=$2
+else
+  SERVER_PATH=$1
+  if [ ! -d ${SERVER_PATH} ]; then
+    echo "Server path does not exist.  Please specify a valid server path."
+    exit 1
+  fi
+
+  ACTION=$2
+  OVERRIDE_DEST=$3
+fi
+
+if [ ! -f ${SERVER_PATH}/settings.mcss ]; then
+  cat <<EOF >> ${SERVER_PATH}/settings.mcss
+JAVA_OPTS=
+JAR_PATH=minecraft_server.jar
+WAIT_TIMEOUT=300
+BACKUP_PATH=${SERVER_PATH}/backup/
+EOF
+
+fi
+
+. ${SERVER_PATH}/settings.mcss
+
+SCREEN_NAME=${SCREEN_NAME_PREFIX}$(basename ${SERVER_PATH})
+
+if [ -z ${SCREEN_NAME} ]; then
+  echo "Error: ${SCREEN_NAME} unset."
+fi
+
+function send_command()
+{
+  screen -x ${SCREEN_NAME} -p 0 -X stuff "$1`printf '\r'`"
+}
+
+function start()
+{
+  # first check it's not already running, then start
+  # if it is running, wait and try again
+  # but don't wait longer than WAIT_TIMEOUT seconds
+
+  cd ${SERVER_PATH}
+  if [ -f ${JAR_PATH} ]; then
+    screen -dmS ${SCREEN_NAME} java -server ${JAVA_OPTS} -jar ${JAR_PATH} nogui
+  else
+    echo "JAR_PATH does not exist."
+    echo "Set JAR_PATH in ${SERVER_PATH}/settings.mcss"
+    exit 1
+  fi
+}
+
+function stop()
+{
+  DISPLAY_ACTION=$(echo ${ACTION} | awk -F '-' '{print $2}')
+  if [ $1 -eq 1 ]; then
+    send_command "/say Server will ${DISPLAY_ACTION} in 15 minutes."; sleep 300
+    send_command "/say Server will ${DISPLAY_ACTION} in 10 minutes."; sleep 300
+    send_command "/say Server will ${DISPLAY_ACTION} in 5 minutes."; sleep 240
+    send_command "/say Server will ${DISPLAY_ACTION} in 1 minute."; sleep 30
+    send_command "/say Server will ${DISPLAY_ACTION} in 30 seconds."; sleep 10
+    send_command "/say Server will ${DISPLAY_ACTION} in 20 seconds."; sleep 10
+    send_command "/say Server will ${DISPLAY_ACTION} in 10 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 9 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 8 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 7 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 6 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 5 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 4 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 3 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 2 seconds."; sleep 1
+    send_command "/say Server will ${DISPLAY_ACTION} in 1 second."; sleep 1
+  fi
+  
+  send_command "/say Server will ${DISPLAY_ACTION} now."
+  send_command "/stop"
+}
+
+function backup()
+{
+  WORLD_PATH=`grep level-name ${SERVER_PATH}/server.properties | awk -F '=' '{print $2}'`
+  WORLD_PATH=${WORLD_PATH:-world}
+  BACKUP_DEST=${1:-${BACKUP_PATH}}
+
+  if [[ -d ${BACKUP_DEST} || "${BACKUP_DEST}" =~ ":" ]]; then
+    rsync -axH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
+  
+    send_command "/say Starting world backup."
+    send_command "/save-off"
+    send_command "/save-all"
+  
+    # Give it time to save.  This could be replaced with a listener on the 
+    # screen to watch for '[Server thread/INFO]: Saved the world'
+    sleep 3
+  
+    rsync -axH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
+    
+    send_command "/save-on"
+    send_command "/say World backup completed."
+  else
+    echo "BACKUP_PATH does not exist."
+    echo "Set BACKUP_PATH in ${SERVER_PATH}/settings.mcss"
+    exit 1
+  fi
+}
+
+case ${ACTION} in
+  start)
+    start
+    ;;
+  warn-stop)
+    if [ -z ${NO_FORK} ]; then
+      echo "Server will stop in 15 minutes."
+      NO_FORK=1 $0 ${SERVER_PATH} stop &
+    else
+      stop 1
+    fi
+    ;;
+  stop)
+    stop 0
+    ;;
+  backup)
+    backup ${OVERRIDE_DEST}
+    ;;
+  restart)
+    stop 0
+    start
+    ;;
+  warn-restart)
+    if [ -z ${NO_FORK} ]; then
+      echo "Server will restart in 15 minutes."
+      NO_FORK=1 $0 ${SERVER_PATH} warn-restart &
+    else
+      stop 1
+      start
+    fi
+    ;;
+  *)
+    echo "Unknown command.  Valid commands: start, stop, restart, backup,  warn-stop, warn-restart"
+    exit 1
+    ;;
+esac
+
+exit 0

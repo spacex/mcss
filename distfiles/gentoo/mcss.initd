@@ -1,0 +1,46 @@
+#~/sbin/runscript
+
+if [-f /etc/mcss.conf ]
+  /etc/mcss.conf
+fi
+
+ALL_SERVERS=0
+
+ARGS=$(getopt -o a -l all -- "$@")
+eval set -- "${args}"
+
+while true ; do
+  case "$1" in
+    -a|--all)
+      ALL_SERVERS=1
+      shift
+      ;;
+    --) shift ; break ;;
+    *) exit 1 ;;
+  esac
+done
+
+function iterate_servers()
+{
+  for f in /etc/mcss.d/*.conf; do
+    . $f
+    if [ ${DISABLED} -eq 0 -a (${ALL_SERVERS} -eq 1 -o ${AUTOSTART} -eq 1) ]; then
+      mcss ${SERVER_PATH} $1 $2 "$@"
+    fi
+  done
+}
+
+case $1 in
+  start|stop|backup|restart|)
+    iterate_servers $1
+    ;;
+  warn-stop|warn-restart)
+    echo "Servers will stop/restart in 15 minutes."
+    iterate_servers $1 -q
+  *)
+    echo "Unknown command.  Valid commands: start, stop, backup, restart, warn-stop, warn-restart"
+    exit 1
+    ;;
+esac
+
+exit 0
