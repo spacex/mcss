@@ -3,7 +3,9 @@
 extra_commands="backup warnstop warnrestart"
 
 depend() {
-  :
+  need localmount
+  use net
+  after netmount nfsmount
 }
 
 #ARGS=$(getopt -o a -l all --)
