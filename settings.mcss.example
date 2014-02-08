@@ -1,4 +1,4 @@
 JAVA_OPTS=${DEFAULT_JAVA_OPTS} -Xms512M -XmX512M
-JAR_PATH=
+JAR_PATH=/path/to/minecraft_server.jar
 WAIT_TIMEOUT=600
 BACKUP_PATH=/path/to/backup

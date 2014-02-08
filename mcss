@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -f /etc/mcss.conf ]; then
+  . /etc/mcss.conf
+fi
+
 if [ ! -z ${NO_FORK} ]; then
   SERVER_PATH=$1
   ACTION=$2
@@ -22,10 +26,10 @@ fi
 
 if [ ! -f ${SERVER_PATH}/settings.mcss ]; then
   cat <<EOF >> ${SERVER_PATH}/settings.mcss
-JAVA_OPTS=
-JAR_PATH=minecraft_server.jar
-WAIT_TIMEOUT=300
-BACKUP_PATH=${SERVER_PATH}/backup/
+JAVA_OPTS=${DEFAULT_JAVA_OPTS}
+JAR_PATH=${DEFAULT_JAR_PATH}
+WAIT_TIMEOUT=${DEFAULT_WAIT_TIMEOUT}
+BACKUP_PATH=${DEFAULT_BACKUP_PATH}
 EOF
 
 fi
