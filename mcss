@@ -4,6 +4,8 @@ if [ -f /etc/mcss.conf ]; then
   . /etc/mcss.conf
 fi
 
+DAEMON=${DAEMON:-0}
+
 if [ ! -z ${NO_FORK} ]; then
   SERVER_PATH=$1
   ACTION=$2
@@ -55,7 +57,11 @@ function start()
 
   cd ${SERVER_PATH}
   if [ -f ${JAR_PATH} ]; then
-    screen -dmS ${SCREEN_NAME} java -server ${JAVA_OPTS} -jar ${JAR_PATH} nogui
+    if [ ${DAEMON} -eq 1 ]; then
+      screen -DmS ${SCREEN_NAME} java -server ${JAVA_OPTS} -jar ${JAR_PATH} nogui &
+    else
+      screen -dmS ${SCREEN_NAME} java -server ${JAVA_OPTS} -jar ${JAR_PATH} nogui
+    fi
   else
     echo "JAR_PATH does not exist."
     echo "Set JAR_PATH in ${SERVER_PATH}/settings.mcss"
@@ -87,6 +93,10 @@ function stop()
   
   send_command "/say Server will ${DISPLAY_ACTION} now."
   send_command "/stop"
+
+  #if [[ $(echo ${ACTION} | awk -F '-' '{print $1}') != "warn" ]]; then
+    #Wait for it to actually stop
+  #fi
 }
 
 function backup()

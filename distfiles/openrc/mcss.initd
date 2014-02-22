@@ -8,27 +8,26 @@ depend() {
   after netmount nfsmount
 }
 
-#ARGS=$(getopt -o a -l all --)
-#eval set -- "${args}"
-#
-#while true ; do
-#  case "$1" in
-#    -a|--all)
-#      ALL_SERVERS=1
-#      shift
-#      ;;
-#    --) shift ; break ;;
-#    *) exit 1 ;;
-#  esac
-#done
-
 iterate_servers() {
   export SCREENDIR=/root/.screen/
+  export DAEMON=1
   for f in /etc/mcss.d/*.conf; do
     . $f
     if [ ${DISABLED} -eq 0 -a ${AUTOSTART} -eq 1 ]; then
       ebegin "  "$(basename $f .conf)
-      mcss ${SERVER_PATH} $1 $2
+      case $1 in
+        start)
+          #start-stop-daemon --start --quiet --exec mcss ${SERVER_PATH} $1 $2
+          mcss ${SERVER_PATH} $1 $2
+	  ;;
+	stop)
+          #start-stop-daemon --stop --quiet --exec mcss ${SERVER_PATH} $1 $2
+          mcss ${SERVER_PATH} $1 $2
+	  ;;
+	*)
+          mcss ${SERVER_PATH} $1 $2
+	  ;;
+      esac
       eend $?
     fi
   done
@@ -37,26 +36,26 @@ iterate_servers() {
 }
 
 start() {
-  ebegin "Starting mcss servers"
+  einfo "Starting mcss servers"
   iterate_servers start ""
 }
 stop() {
-  ebegin "Stopping mcss servers"
+  einfo "Stopping mcss servers"
   iterate_servers stop ""
 }
 backup() {
-  ebegin "Backing up mcss servers"
+  einfo "Backing up mcss servers"
   iterate_servers backup ""
 }
 restart() {
-  ebegin "Restarting mcss servers"
+  einfo "Restarting mcss servers"
   iterate_servers restart ""
 }
 warnstop() {
-  ebegin "Stopping mcss servers in 15 minutes"
+  einfo "Stopping mcss servers in 15 minutes"
   iterate_servers warn-stop -q
 }
 warnrestart() {
-  ebegin "Restarting mcss servers in 15 minutes"
+  einfo "Restarting mcss servers in 15 minutes"
   iterate_servers warn-restart -q
 }
