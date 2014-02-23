@@ -30,6 +30,7 @@ if [ ! -f ${SERVER_PATH}/settings.mcss ]; then
   cat <<EOF >> ${SERVER_PATH}/settings.mcss
 JAVA_OPTS=${DEFAULT_JAVA_OPTS}
 JAR_PATH=${DEFAULT_JAR_PATH}
+JAR_TYPE=${DEFAULT_JAR_TYPE}
 WAIT_TIMEOUT=${DEFAULT_WAIT_TIMEOUT}
 BACKUP_PATH=${DEFAULT_BACKUP_PATH}
 EOF
@@ -39,14 +40,50 @@ fi
 . ${SERVER_PATH}/settings.mcss
 
 SCREEN_NAME=${SCREEN_NAME_PREFIX}$(basename ${SERVER_PATH})
-
 if [ -z ${SCREEN_NAME} ]; then
   echo "Error: ${SCREEN_NAME} unset."
 fi
 
+JAR_TYPE=${JAR_TYPE:-vanilla}
+
 function send_command()
 {
-  screen -x ${SCREEN_NAME} -p 0 -X stuff "$1`printf '\r'`"
+  case $1 in
+    /say)
+      case ${JAR_TYPE} in
+        bungeecord)
+	  CMD="alert"
+	  ;;
+	bukkit)
+	  CMD="say"
+	  ;;
+        *)
+	  CMD="/say"
+	  ;;
+      esac
+      ;;
+    /stop)
+      case ${JAR_TYPE} in
+        bungeecord)
+	  CMD="end"
+	  ;;
+	bukkit)
+	  CMD="stop"
+	  ;;
+	*)
+	  CMD="/stop"
+	  ;;
+      esac
+      ;;
+    *)
+      CMD=${1}
+      ;;
+  esac
+  screen -x ${SCREEN_NAME} -p 0 -X stuff "$CMD"
+  if [ ! -z "$2" ]; then
+    screen -x ${SCREEN_NAME} -p 0 -X stuff " $2"
+  fi
+  screen -x ${SCREEN_NAME} -p 0 -X stuff "`printf '\r'`"
 }
 
 function start()
@@ -69,26 +106,29 @@ function start()
 function stop()
 {
   DISPLAY_ACTION=$(echo ${ACTION} | awk -F '-' '{print $2}')
+  if [ -z ${DISPLAY_ACTION} ]; then
+    DISPLAY_ACTION=${ACTION}
+  fi
   if [ $1 -eq 1 ]; then
-    send_command "/say Server will ${DISPLAY_ACTION} in 15 minutes."; sleep 300
-    send_command "/say Server will ${DISPLAY_ACTION} in 10 minutes."; sleep 300
-    send_command "/say Server will ${DISPLAY_ACTION} in 5 minutes."; sleep 240
-    send_command "/say Server will ${DISPLAY_ACTION} in 1 minute."; sleep 30
-    send_command "/say Server will ${DISPLAY_ACTION} in 30 seconds."; sleep 10
-    send_command "/say Server will ${DISPLAY_ACTION} in 20 seconds."; sleep 10
-    send_command "/say Server will ${DISPLAY_ACTION} in 10 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 9 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 8 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 7 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 6 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 5 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 4 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 3 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 2 seconds."; sleep 1
-    send_command "/say Server will ${DISPLAY_ACTION} in 1 second."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 15 minutes."; sleep 300
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 10 minutes."; sleep 300
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 5 minutes."; sleep 240
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 1 minute."; sleep 30
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 30 seconds."; sleep 10
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 20 seconds."; sleep 10
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 10 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 9 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 8 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 7 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 6 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 5 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 4 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 3 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 2 seconds."; sleep 1
+    send_command "/say" "Server will ${DISPLAY_ACTION} in 1 second."; sleep 1
   fi
   
-  send_command "/say Server will ${DISPLAY_ACTION} now."
+  send_command "/say" "Server will ${DISPLAY_ACTION} now."
   send_command "/stop"
 
   #Wait for it to actually stop until WAIT_TIMEOUT
@@ -105,7 +145,7 @@ function backup()
   if [[ -d ${BACKUP_DEST} || "${BACKUP_DEST}" =~ ":" ]]; then
     rsync -axH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
   
-    send_command "/say Starting world backup."
+    send_command "/say" "Starting world backup."
     send_command "/save-off"
     send_command "/save-all"
   
@@ -116,7 +156,7 @@ function backup()
     rsync -axH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
     
     send_command "/save-on"
-    send_command "/say World backup completed."
+    send_command "/say" "World backup completed."
   else
     echo "BACKUP_PATH does not exist."
     echo "Set BACKUP_PATH in ${SERVER_PATH}/settings.mcss"
@@ -136,7 +176,7 @@ case ${ACTION} in
   warn-stop)
     if [ -z ${NO_FORK} ]; then
       echo "Server will stop in 15 minutes."
-      NO_FORK=1 $0 ${SERVER_PATH} stop &
+      NO_FORK=1 $0 ${SERVER_PATH} warn-stop &
     else
       stop 1
     fi
