@@ -46,6 +46,15 @@ fi
 
 JAR_TYPE=${JAR_TYPE:-vanilla}
 
+function base_command()
+{
+  COMMAND=$(echo $1 | awk -F '-' '{print $2}')
+  if [ -z ${COMMAND} ]; then
+    COMMAND=$1
+  fi
+  echo ${COMMAND}
+}
+
 function send_command()
 {
   case $1 in
@@ -105,10 +114,7 @@ function start()
 
 function stop()
 {
-  DISPLAY_ACTION=$(echo ${ACTION} | awk -F '-' '{print $2}')
-  if [ -z ${DISPLAY_ACTION} ]; then
-    DISPLAY_ACTION=${ACTION}
-  fi
+  DISPLAY_ACTION=$(base_command ${ACTION})
   if [ $1 -eq 1 ]; then
     send_command "/say" "Server will ${DISPLAY_ACTION} in 15 minutes."; sleep 300
     send_command "/say" "Server will ${DISPLAY_ACTION} in 10 minutes."; sleep 300
@@ -173,16 +179,12 @@ case ${ACTION} in
   start)
     start
     ;;
-  warn-stop)
-    if [ -z ${NO_FORK} ]; then
-      echo "Server will stop in 15 minutes."
-      NO_FORK=1 $0 ${SERVER_PATH} warn-stop &
-    else
-      stop 1
-    fi
-    ;;
   stop)
     stop 0
+    ;;
+  restart)
+    stop 0
+    start
     ;;
   screen)
     connect_screen
@@ -190,14 +192,18 @@ case ${ACTION} in
   backup)
     backup ${OVERRIDE_DEST}
     ;;
-  restart)
-    stop 0
-    start
+  warn-stop)
+    if [ -z ${NO_FORK} ]; then
+      echo "Server will $(base_command ${ACTION}) in 15 minutes."
+      NO_FORK=1 $0 ${SERVER_PATH} ${ACTION} &
+    else
+      stop 1
+    fi
     ;;
   warn-restart)
     if [ -z ${NO_FORK} ]; then
-      echo "Server will restart in 15 minutes."
-      NO_FORK=1 $0 ${SERVER_PATH} warn-restart &
+      echo "Server will $(base_command ${ACTION}) in 15 minutes."
+      NO_FORK=1 $0 ${SERVER_PATH} ${ACTION} &
     else
       stop 1
       start
