@@ -149,7 +149,7 @@ function backup()
   BACKUP_DEST=${1:-${BACKUP_PATH}}
 
   if [[ -d ${BACKUP_DEST} || "${BACKUP_DEST}" =~ ":" ]]; then
-    rsync -axH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
+    rsync -axcH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
   
     send_command "/say" "Starting world backup."
     send_command "/save-off"
@@ -159,7 +159,7 @@ function backup()
     # screen to watch for '[Server thread/INFO]: Saved the world'
     sleep 3
   
-    rsync -axH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
+    rsync -axcH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
     
     send_command "/save-on"
     send_command "/say" "World backup completed."
