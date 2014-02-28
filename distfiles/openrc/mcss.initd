@@ -13,12 +13,14 @@ iterate_servers() {
   export DAEMON=1
   for f in /etc/mcss.d/*.conf; do
     . $f
-    if [ ${DISABLED} -eq 0 -a ${AUTOSTART} -eq 1 ]; then
+    if [ ${DISABLED} -eq 0 ]; then
       ebegin "  "$(basename $f .conf)
       case $1 in
         start)
           #start-stop-daemon --start --quiet --exec mcss ${SERVER_PATH} $1 $2
-          mcss ${SERVER_PATH} $1 $2
+	  if [ ${AUTOSTART} -eq 1 ]; then
+            mcss ${SERVER_PATH} $1 $2
+	  fi
 	  ;;
 	stop)
           #start-stop-daemon --stop --quiet --exec mcss ${SERVER_PATH} $1 $2
