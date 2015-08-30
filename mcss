@@ -32,6 +32,7 @@ JAVA_OPTS=${DEFAULT_JAVA_OPTS}
 JAR_PATH=${DEFAULT_JAR_PATH}
 JAR_TYPE=${DEFAULT_JAR_TYPE}
 WAIT_TIMEOUT=${DEFAULT_WAIT_TIMEOUT}
+BACKUP_TYPE=${DEFAULT_BACKUP_TYPE}
 BACKUP_PATH=${DEFAULT_BACKUP_PATH}
 EOF
 
@@ -63,12 +64,8 @@ function send_command()
         bungeecord)
 	  CMD="alert"
 	  ;;
-	bukkit)
-	  CMD="say"
-	  ;;
         *)
-	  CMD="/say"
-	  ;;
+	  CMD=${1}
       esac
       ;;
     /stop)
@@ -76,19 +73,40 @@ function send_command()
         bungeecord)
 	  CMD="end"
 	  ;;
-	bukkit)
-	  CMD="stop"
-	  ;;
 	*)
-	  CMD="/stop"
-	  ;;
+	  CMD=${1}
       esac
+      ;;
+    /save-off)
+      send_command "/say" "Starting world backup."
+      CMD=${1}
       ;;
     *)
       CMD=${1}
+  esac
+
+  # bukkit servers don't like the / in front
+  if [[ ${JAR_TYPE} == "bukkit" ]]; then
+    CMD=${CMD#"/"}
+  fi
+
+  _send_command ${CMD} $2
+
+  case $1 in
+    /save-all)
+      # Give it time to save.  This could be replaced with a listener on the 
+      # screen to watch for '[Server thread/INFO]: Saved the world'
+      sleep 3
+      ;;
+    /save-on)
+      send_command "/say" "World backup completed."
       ;;
   esac
-  screen -x ${SCREEN_NAME} -p 0 -X stuff "$CMD"
+}
+
+function _send_command()
+{
+  screen -x ${SCREEN_NAME} -p 0 -X stuff "$1"
   if [ ! -z "$2" ]; then
     screen -x ${SCREEN_NAME} -p 0 -X stuff " $2"
   fi
@@ -146,28 +164,38 @@ function backup()
 {
   WORLD_PATH=`grep level-name ${SERVER_PATH}/server.properties | awk -F '=' '{print $2}'`
   WORLD_PATH=${WORLD_PATH:-world}
-  BACKUP_DEST=${1:-${BACKUP_PATH}}
+  BACKUP_TYPE=${1:-${BACKUP_TYPE}}
+  BACKUP_DEST=${2:-${BACKUP_PATH}}
 
-  if [[ -d ${BACKUP_DEST} || "${BACKUP_DEST}" =~ ":" ]]; then
-    rsync -axcH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
-  
-    send_command "/say" "Starting world backup."
-    send_command "/save-off"
-    send_command "/save-all"
-  
-    # Give it time to save.  This could be replaced with a listener on the 
-    # screen to watch for '[Server thread/INFO]: Saved the world'
-    sleep 3
-  
-    rsync -axcH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
-    
-    send_command "/save-on"
-    send_command "/say" "World backup completed."
-  else
-    echo "BACKUP_PATH does not exist."
-    echo "Set BACKUP_PATH in ${SERVER_PATH}/settings.mcss"
-    exit 1
-  fi
+  case ${BACKUP_TYPE} in
+    rsync)
+      if [[ -d ${BACKUP_DEST} || "${BACKUP_DEST}" =~ ":" ]]; then
+        rsync -axcH ${SERVER_PATH}/ ${BACKUP_DEST}/ --exclude ${WORLD_PATH}
+        
+        send_command "/save-off"
+        send_command "/save-all"
+        
+        rsync -axcH ${SERVER_PATH}/${WORLD_PATH}/ ${BACKUP_DEST}/${WORLD_PATH}/
+
+        send_command "/save-on"
+      else
+        echo "BACKUP_PATH does not exist."
+        echo "Set BACKUP_PATH in ${SERVER_PATH}/settings.mcss"
+        exit 1
+      fi
+      ;;
+    zfs)
+      send_command "/save-off"
+      send_command "/save-all"
+
+      zfs snap ${BACKUP_DEST}@$(date +%y%m%d-%H%M)
+
+      send_command "/save-on"
+      ;;
+    *)
+      echo "Unknown backup type: ${BACKUP_TYPE}. Valid backup types are: rsync, zfs."
+      exit 1
+  esac
 }
 
 function connect_screen()
@@ -190,7 +218,11 @@ case ${ACTION} in
     connect_screen
     ;;
   backup)
-    backup ${OVERRIDE_DEST}
+    if [[ -z ${OVERRID_DEST} ]]; then
+      backup
+    else
+      backup rsync ${OVERRIDE_DEST}
+    fi
     ;;
   warn-stop)
     if [ -z ${NO_FORK} ]; then
@@ -212,7 +244,6 @@ case ${ACTION} in
   *)
     echo "Unknown command.  Valid commands: start, stop, restart, backup, screen, warn-stop, warn-restart"
     exit 1
-    ;;
 esac
 
 exit 0
