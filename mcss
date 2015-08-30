@@ -106,11 +106,13 @@ function send_command()
 
 function _send_command()
 {
-  screen -x ${SCREEN_NAME} -p 0 -X stuff "$1"
-  if [ ! -z "$2" ]; then
-    screen -x ${SCREEN_NAME} -p 0 -X stuff " $2"
+  if screen -list | grep ${SCREEN_NAME} ; then
+    screen -x ${SCREEN_NAME} -p 0 -X stuff "$1"
+    if [ ! -z "$2" ]; then
+      screen -x ${SCREEN_NAME} -p 0 -X stuff " $2"
+    fi
+    screen -x ${SCREEN_NAME} -p 0 -X stuff "`printf '\r'`"
   fi
-  screen -x ${SCREEN_NAME} -p 0 -X stuff "`printf '\r'`"
 }
 
 function start()
