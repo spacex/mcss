@@ -164,7 +164,7 @@ function stop()
 
 function backup()
 {
-  WORLD_PATH=`grep level-name ${SERVER_PATH}/server.properties | awk -F '=' '{print $2}'`
+  WORLD_PATH=`grep -s level-name ${SERVER_PATH}/server.properties | awk -F '=' '{print $2}'`
   WORLD_PATH=${WORLD_PATH:-world}
   BACKUP_TYPE=${1:-${BACKUP_TYPE}}
   BACKUP_DEST=${2:-${BACKUP_PATH}}
