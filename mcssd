@@ -22,22 +22,33 @@ done
 
 function iterate_servers()
 {
+  export SCREENDIR=/root/.screen/
+  export DAEMON=1
   if [ ! -f /etc/mcss.d/*.conf ]; then
     echo "No minecraft servers configured"
     echo "Place configuration files in /etc/mcss.d and restart mcss"
   else
     for f in /etc/mcss.d/*.conf; do
       . $f
-      if [[ ${DISABLED} == 0 && ( ${ALL_SERVERS} == 1 || ${AUTOSTART} == 1 ) ]]; then
-        echo $(basename $f .conf)
-        mcss ${SERVER_PATH} $1 $2 "$@"
+      if [[ ${DISABLED} == 0 ]]; then
+        echo "  "$(basename $f .conf)
+        case $1 in
+          start)
+            if [[ ${AUTOSTART} == 1  || ${ALL_SERVERS} == 1 ]]; then
+              mcss ${SERVER_PATH} $1 $2 "$@"
+            fi
+            ;;
+          *)
+            mcss ${SERVER_PATH} $1 $2 "$@"
+        esac
+        #Check for failed start
       fi
     done
   fi
 }
 
 case $1 in
-  start|stop|backup|restart)
+  start|stop|restart|backup)
     iterate_servers $1
     ;;
   warn-stop|warn-restart)
