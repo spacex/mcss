@@ -1,4 +1,4 @@
-JAVA_OPTS="${DEFAULT_JAVA_OPTS} -Xms512M -XmX512M"
+JAVA_OPTS="${DEFAULT_JAVA_OPTS} -Xms512M -Xmx512M"
 JAR_PATH="/path/to/minecraft_server.jar"
 JAR_TYPE="vanilla"
 WAIT_TIMEOUT=600
