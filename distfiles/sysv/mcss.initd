@@ -1,40 +1,18 @@
 #!/bin/bash
 #
+# /etc/init.d/mcss
 # VERY basic init-like script for starting and stopping all configured servers
-
-ALL_SERVERS=0
-
-ARGS=$(getopt -o a -l all -- "$@")
-eval set -- "${args}"
-
-while true ; do
-  case "$1" in
-    -a|--all)
-      ALL_SERVERS=1
-      shift
-      ;;
-    --) shift ; break ;;
-    *) exit 1 ;;
-  esac
-done
-
-function iterate_servers()
-{
-  for f in /etc/mcss.d/*.conf; do
-    . $f
-    if [ ${DISABLED} -eq 0 -a (${ALL_SERVERS} -eq 1 -o ${AUTOSTART} -eq 1) ]; then
-      mcss ${SERVER_PATH} $1 $2 "$@"
-    fi
-  done
-}
+#
+# chkconfig: 2345 95 05
+# description: Minecraft Servers
+#
+# processname: mcss
+# config: /etc/mcss.conf
 
 case $1 in
-  start|stop|backup|restart|)
-    iterate_servers $1
+  start|stop|restart|backup|warn-stop|warn-restart)
+    mcssd $1
     ;;
-  warn-stop|warn-restart)
-    echo "Servers will stop/restart in 15 minutes."
-    iterate_servers $1 -q
   *)
     echo "Unknown command.  Valid commands: start, stop, backup, restart, warn-stop, warn-restart"
     exit 1
