@@ -5,7 +5,7 @@ if [ -f /etc/mcss.conf ]; then
 fi
 
 DAEMON=${DAEMON:-0}
-SCREENDIR=/var/lib/mcss/
+export SCREENDIR=/var/lib/mcss/
 
 if [ ! -z ${NO_FORK} ]; then
   SERVER_PATH=$1
@@ -103,12 +103,13 @@ function send_command()
 
 function _send_command()
 {
-  if screen -list | grep ${SCREEN_NAME} ; then
-    screen -x ${SCREEN_NAME} -p 0 -X stuff "$1"
+  SCREEN_CMD="screen -x ${SCREEN_NAME} -p 0 -X stuff"
+  if screen -list | grep -q ${SCREEN_NAME} ; then
+    ${SCREEN_CMD} "$1"
     if [ ! -z "$2" ]; then
-      screen -x ${SCREEN_NAME} -p 0 -X stuff " $2"
+      ${SCREEN_CMD} " $2"
     fi
-    screen -x ${SCREEN_NAME} -p 0 -X stuff "`printf '\r'`"
+    ${SCREEN_CMD} "`printf '\r'`"
   fi
 }
 
