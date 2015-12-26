@@ -15,6 +15,7 @@ else ifeq ($(startup_type),systemd)
 	install -m 0644 distfiles/systemd/mcss.systemd /lib/systemd/system/mcss.service
 else ifeq ($(startup_type),sysv)
 	install -m 0755 distfiles/sysv/mcss.initd /etc/init.d/mcss
+	chkconfig --add mcss
 endif
 
 	mkdir -p $(prefix)/share/mcss $(prefix)/share/doc/mcss
@@ -34,7 +35,14 @@ uninstall:
 	rm /etc/mcss.conf
 	rm -r /etc/mcss.d
 
+ifeq ($(startup_type),openrc)
+	rm /etc/init.d/mcss
+else ifeq ($(startup_type),systemd)
 	rm /lib/systemd/system/mcss.service
+else ifeq ($(startup_type),sysv)
+	chkconfig --del mcss
+	rm /etc/init.d/mcss
+endif
 	
 	rm -r $(prefix)/share/mcss $(prefix)/share/doc/mcss
 
