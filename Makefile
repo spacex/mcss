@@ -21,6 +21,8 @@ endif
 	install -m 0644 settings.mcss.example $(prefix)/share/mcss
 	install -m 0644 LICENSE $(prefix)/share/doc/mcss
 
+	mkdir -p /var/lib/mcss
+
 install-links: install
 	ln -sf $(PWD)/mcss $(prefix)/bin/mcss
 	ln -sf $(PWD)/mcssd $(prefix)/bin/mcssd
@@ -35,3 +37,5 @@ uninstall:
 	rm /lib/systemd/system/mcss.service
 	
 	rm -r $(prefix)/share/mcss $(prefix)/share/doc/mcss
+
+	rm -r /var/lib/mcss

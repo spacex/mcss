@@ -22,7 +22,6 @@ done
 
 function iterate_servers()
 {
-  export SCREENDIR=/root/.screen/
   export DAEMON=1
   if [ ! -f /etc/mcss.d/*.conf ]; then
     echo "No minecraft servers configured"

@@ -5,6 +5,7 @@ if [ -f /etc/mcss.conf ]; then
 fi
 
 DAEMON=${DAEMON:-0}
+SCREENDIR=/var/lib/mcss/
 
 if [ ! -z ${NO_FORK} ]; then
   SERVER_PATH=$1
