@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -f /etc/mcss.conf ]; then
-  . /etc/mcss.conf
+  source /etc/mcss.conf
 fi
 
 DAEMON=${DAEMON:-0}
@@ -28,18 +28,14 @@ else
 fi
 
 if [ ! -f ${SERVER_PATH}/settings.mcss ]; then
-  cat <<EOF >> ${SERVER_PATH}/settings.mcss
-JAVA_OPTS=${DEFAULT_JAVA_OPTS}
-JAR_PATH=${DEFAULT_JAR_PATH}
-JAR_TYPE=${DEFAULT_JAR_TYPE}
-WAIT_TIMEOUT=${DEFAULT_WAIT_TIMEOUT}
-BACKUP_TYPE=${DEFAULT_BACKUP_TYPE}
-BACKUP_PATH=${DEFAULT_BACKUP_PATH}
-EOF
-
+  cat /usr/local/share/mcss/settings.mcss.example > ${SERVER_PATH}/settings.mcss
+  #Exit here so that they can adjust the settings
+  echo "Default settings copied to ${SERVER_PATH}/settings.mcss"
+  echo "Adjust options and try again"
+  exit 1
 fi
 
-. ${SERVER_PATH}/settings.mcss
+source ${SERVER_PATH}/settings.mcss
 
 SCREEN_NAME=${SCREEN_NAME_PREFIX}$(basename ${SERVER_PATH})
 if [ -z ${SCREEN_NAME} ]; then
