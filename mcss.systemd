@@ -1,0 +1,12 @@
+[Unit]
+Description=Minecraft Servers
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/mcssd start
+ExecStop=/usr/local/bin/mcssd stop
+Type=oneshot
+RemainAfterExit=True
+
+[Install]
+WantedBy=multi-user.target
