@@ -54,6 +54,10 @@ case $1 in
     echo "Servers will stop/restart in 15 minutes."
     iterate_servers $1 -q
     ;;
+  list)
+    export SCREENDIR=/var/lib/mcss
+    screen -list
+    ;;
   *)
     echo "Unknown command.  Valid commands: start, stop, backup, restart, warn-stop, warn-restart"
     exit 2
