@@ -1,8 +1,10 @@
 prefix=/usr/local
 starup_type=systemd
 
+all: mcss mcssd
+
 .PHONY: install install-links
-install: mcss mcssd
+install: all
 	install -m 0755 mcss $(prefix)/bin
 	install -m 0755 mcssd $(prefix)/bin
 
