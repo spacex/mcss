@@ -222,7 +222,7 @@ case ${ACTION} in
     connect_screen
     ;;
   backup)
-    if [[ -z ${OVERRID_DEST} ]]; then
+    if [[ -z ${OVERRIDE_DEST} ]]; then
       backup
     else
       backup rsync ${OVERRIDE_DEST}
