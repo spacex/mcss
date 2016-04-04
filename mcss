@@ -221,6 +221,8 @@ case ${ACTION} in
   screen)
     connect_screen
     ;;
+  command)
+    echo send_command "$@"
   backup)
     if [[ -z ${OVERRIDE_DEST} ]]; then
       backup
@@ -246,7 +248,7 @@ case ${ACTION} in
     fi
     ;;
   *)
-    echo "Unknown command.  Valid commands: start, stop, restart, backup, screen, warn-stop, warn-restart"
+    echo "Unknown command.  Valid commands: start, [warn-]stop, [warn-]restart, backup, screen, command"
     exit 1
 esac
 
