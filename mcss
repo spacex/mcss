@@ -115,9 +115,12 @@ function _send_command()
 
 function start()
 {
-  # first check it's not already running, then start
-  # if it is running, wait and try again
-  # but don't wait longer than WAIT_TIMEOUT seconds
+  # if [ $(server_running) ]; then
+  #   # check responsiveness of server
+  #   # wait for response up to WAIT_TIMEOUT seconds (0=infinite)
+  #   # if WAIT_TIMEOUT reached, kill screen/process
+  #   # optionally, try to start back up (TRY_RESTART?)
+  # else
 
   cd ${SERVER_PATH}
   if [ -f ${JAR_PATH} ]; then
@@ -155,9 +158,10 @@ function stop()
   send_command "/say" "Server will ${DISPLAY_ACTION} now."
   send_command "/stop"
 
-  #Wait for it to actually stop until WAIT_TIMEOUT
+  # Wait for it to actually stop until WAIT_TIMEOUT
   I=0
   while ps -p $(cat ${SERVER_PATH}/screen.pid) > /dev/null && [ $I -lt ${WAIT_TIMEOUT} ] ; do I=$((I+1)); sleep 1; done
+  # if WAIT_TIMEOUT occurs and it still hasn't stopped, kill the screen process
 }
 
 function backup()
